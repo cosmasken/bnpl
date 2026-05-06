@@ -9,13 +9,14 @@ import { BridgeInterface } from './components/BridgeInterface'
 import { PurchaseInterface } from './components/PurchaseInterface'
 import { InstallmentTracker } from './components/InstallmentTracker'
 import { BalanceDisplay } from './components/BalanceDisplay'
+import { TroveInterface } from './components/TroveInterface'
 import { MUSDService } from './services/musdService'
 
 const queryClient = new QueryClient()
 
 function AppContent() {
     const { address, isConnected, chain } = useAccount()
-    const [activeTab, setActiveTab] = useState<'bridge' | 'purchase' | 'installments' | 'network'>('bridge')
+    const [activeTab, setActiveTab] = useState<'trove' | 'bridge' | 'purchase' | 'installments' | 'network'>('trove')
     const [balances, setBalances] = useState({
         mezo: '0',
         baseSepolia: '0'
@@ -108,6 +109,12 @@ function AppContent() {
 
                     <div className="tabs">
                         <button
+                            className={`button ${activeTab === 'trove' ? 'primary' : ''}`}
+                            onClick={() => setActiveTab('trove')}
+                        >
+                            Mezo Trove
+                        </button>
+                        <button
                             className={`button ${activeTab === 'bridge' ? 'primary' : ''}`}
                             onClick={() => setActiveTab('bridge')}
                         >
@@ -134,6 +141,14 @@ function AppContent() {
                     </div>
 
                     <div className="tab-content">
+                        {activeTab === 'trove' && (
+                            <TroveInterface
+                                onMUSDReceived={(amount) => {
+                                    loadBalances()
+                                }}
+                            />
+                        )}
+
                         {activeTab === 'bridge' && (
                             <BridgeInterface
                                 userAddress={address}

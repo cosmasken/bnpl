@@ -1,40 +1,50 @@
 # Tech Debt & Hackathon Roadmap#
 
-## Existing Tech Debt (Aligned with Hackathon Goals)
+# Tech Debt & Hackathon Roadmap
 
-### 1. Empty/Mock Files
-| File | Issue | Hackathon Alignment |
-|------|-------|---------------------|
-| `src/services/simpleBridgeService.ts` | Empty file (0 lines) - should be removed | Cleanup for Technical Implementation score |
-| `src/components/PurchaseInterface.tsx` | Purchase flow is mocked (setTimeout simulation, no real blockchain interaction) | Core to Business Viability (BNPL use case) |
-| `src/components/InstallmentTracker.tsx` | Uses hardcoded mock data, payment actions are simulated only | Core to Business Viability (installment tracking) |
+## ✅ COMPLETED - Tech Debt Fixes
 
-### 2. TypeScript @ts-nocheck Suppressions
-- `src/services/bridgeService.ts:1`
-- `src/config/wagmi.ts:1`
-- `src/components/PurchaseInterface.tsx:1`
+### 1. ✅ Fixed Critical Bridge Service Bug
+- **FIXED:** `src/services/bridgeService.ts:118-124` - Now uses proper destination chain signer for redeem transaction
+- **FIXED:** Implemented Wormhole SDK route pattern with `signSendWait`
+- **FIXED:** Removed @ts-nocheck suppressions from `bridgeService.ts`, `wagmi.ts`, and `PurchaseInterface.tsx`
+- **FIXED:** Removed empty `src/services/simpleBridgeService.ts` file (0 lines)
+- **FIXED:** Removed debug code from `src/components/BridgeInterface.tsx`
 
-### 3. Bug in Bridge Service (CRITICAL)
-`src/services/bridgeService.ts:118-124` - Attempts to send redeem transaction on **destination chain** using **source chain walletClient**.
+### 2. ✅ Added Mezo Trove Integration
+- **ADDED:** `src/services/troveService.ts` - Complete service for BTC collateral and MUSD borrowing
+- **ADDED:** `src/config/contracts.ts` - Mezo Testnet addresses and minimal ABIs
+- **IMPLEMENTED:** `openTrove()`, `addCollateral()`, `borrowMUSD()`, `repayMUSD()` functions
+- **IMPLEMENTED:** `getTroveData()` and `hasTrove()` utility functions
+- **VERIFIED:** Uses real Mezo contracts (not custom deployment)
 
-**Fix Reference:** `references/ntt-bridge-mezo-testnet/cli/src/index.ts:71-76`
-```typescript
-// Reference shows proper pattern: use dstNtt.redeem() with dst signer
-const dstTxids = await signSendWait(
-  dst,
-  dstNtt.redeem([vaa!], dstSigner.address.address),
-  dstSigner.signer
-);
-```
+---
 
-**Recommended Fix:** Use Wormhole SDK route pattern from `references/ntt-bridge-mezo-testnet/cli/src/index.ts`
+## 🚧 REMAINING WORK - Implementation Priority
 
-### 4. Debug Code in UI
-`src/components/BridgeInterface.tsx:169-171` - Debug info visible in production UI.
+### Phase 3: ✅ NEXT - Create Trove UI Component
+**Action:** Create `src/components/TroveInterface.tsx`
+- Integrate `troveService.ts` with React UI
+- Allow users to deposit BTC and borrow MUSD
+- Display collateral ratio and debt status
+- **Reference:** `references/dapp/src/hooks/useSwapMutations.ts` (React Query patterns)
 
-### 5. Missing Files/Config
-- No `.env.example` file (uses `VITE_WALLETCONNECT_PROJECT_ID` in `src/config/wagmi.ts:58`)
-- No proper test files (only utility in `src/utils/bridgeTest.ts`)
+### Phase 4: Deploy BitPayTreasury.sol on Base Sepolia
+**Action:** Create and deploy treasury contract on Base
+- User locks bridged MUSD → gets fake USDC 1:1
+- **Reference:** `references/Stratum-FI/stratum-contracts/contracts/VaultController.sol`
+- Deploy fake USDC token for hackathon demo
+
+### Phase 5: Replace Mock Components with Real Transactions
+**Files to Update:**
+- `src/components/PurchaseInterface.tsx` - Replace setTimeout simulation
+- `src/components/InstallmentTracker.tsx` - Replace hardcoded mock data
+- Connect to Base treasury contract events
+
+### Phase 6: Bitrefill Integration (LAST)
+**Action:** Real merchant spending integration
+- **Reference:** `references/mezo-x402/gui/src/usePayForJoke.ts`
+- Do this AFTER full cross-chain flow works
 
 ---
 
