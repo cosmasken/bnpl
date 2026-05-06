@@ -1,203 +1,201 @@
 import React, { useState, useEffect } from 'react'
-
-interface Installment {
-    id: string
-    purchaseId: string
-    merchant: string
-    amount: string
-    dueDate: string
-    status: 'pending' | 'paid' | 'overdue'
-    paymentNumber: number
-    totalPayments: number
-}
+import { installmentService, InstallmentData, RepaymentData } from '../services/installmentService'
 
 interface InstallmentTrackerProps {
     userAddress: string
 }
 
 export function InstallmentTracker({ userAddress }: InstallmentTrackerProps) {
-    const [installments, setInstallments] = useState<Installment[]>([])
+    const [installments, setInstallments] = useState<InstallmentData[]>([])
+    const [repayments, setRepayments] = useState<RepaymentData[]>([])
+    const [summary, setSummary] = useState<any>(null)
     const [isLoading, setIsLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
-    // Mock data for demo
     useEffect(() => {
-        const mockInstallments: Installment[] = [
-            {
-                id: '1',
-                purchaseId: 'purchase-1',
-                merchant: 'Bitrefill',
-                amount: '33.33',
-                dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-                status: 'pending',
-                paymentNumber: 2,
-                totalPayments: 3
-            },
-            {
-                id: '2',
-                purchaseId: 'purchase-1',
-                merchant: 'Bitrefill',
-                amount: '33.33',
-                dueDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-                status: 'paid',
-                paymentNumber: 1,
-                totalPayments: 3
-            },
-            {
-                id: '3',
-                purchaseId: 'purchase-2',
-                merchant: 'Amazon',
-                amount: '25.00',
-                dueDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-                status: 'overdue',
-                paymentNumber: 1,
-                totalPayments: 4
-            }
-        ]
-        setInstallments(mockInstallments)
+        if (userAddress) {
+            loadInstallmentData()
+        }
     }, [userAddress])
 
-    const handlePayInstallment = async (installmentId: string) => {
+    const loadInstallmentData = async () => {
         setIsLoading(true)
-
-        // Simulate payment processing
-        setTimeout(() => {
-            setInstallments(prev =>
-                prev.map(installment =>
-                    installment.id === installmentId
-                        ? { ...installment, status: 'paid' as const }
-                        : installment
-                )
-            )
+        setError(null)
+        
+        try {
+            const [installmentData, repaymentData, summaryData] = await Promise.all([
+                installmentService.getUserInstallments(userAddress),
+                installmentService.getUserRepayments(userAddress),
+                installmentService.getUserSummary(userAddress)
+            ])
+            
+            setInstallments(installmentData)
+            setRepayments(repaymentData)
+            setSummary(summaryData)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load installment data')
+        } finally {
             setIsLoading(false)
-        }, 2000)
-    }
-
-    const pendingInstallments = installments.filter(i => i.status === 'pending')
-    const overdueInstallments = installments.filter(i => i.status === 'overdue')
-    const paidInstallments = installments.filter(i => i.status === 'paid')
-
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'pending': return '#f7931e'
-            case 'paid': return '#4ade80'
-            case 'overdue': return '#ef4444'
-            default: return '#888'
         }
     }
 
-    return (
-        <div className="card">
-            <h3>My Installments</h3>
-            <p>Track and manage your installment payments across all purchases.</p>
+    const formatDate = (timestamp: number) => {
+        return new Date(timestamp * 1000).toLocaleDateString()
+    }
 
-            {/* Summary */}
-            <div className="grid" style={{ marginBottom: '2rem' }}>
-                <div className="balance">
-                    <div className="balance-label">Pending Payments</div>
-                    <div className="balance-amount">{pendingInstallments.length}</div>
+    const formatTxHash = (hash: string) => {
+        return `${hash.slice(0, 6)}...${hash.slice(-4)}`
+    }
+
+    if (!userAddress) {
+        return (
+            <div className="card">
+                <h3>Treasury Activity</h3>
+                <p>Connect your wallet to view your treasury transactions</p>
+            </div>
+        )
+    }
+
+    return (
+        <div>
+            <h3>Treasury Activity Tracker</h3>
+            
+            {error && (
+                <div className="error-message">
+                    {error}
                 </div>
-                <div className="balance">
-                    <div className="balance-label">Overdue Payments</div>
-                    <div className="balance-amount" style={{ color: '#ef4444' }}>
-                        {overdueInstallments.length}
+            )}
+            
+            {isLoading && (
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                    <div className="loading"></div>
+                    <p>Loading treasury activity...</p>
+                </div>
+            )}
+            
+            {/* Summary Stats */}
+            {summary && (
+                <div className="balance-display">
+                    <div className="balance-card">
+                        <h4>Total Locked</h4>
+                        <div className="amount">{summary.totalLocked} MUSD</div>
+                    </div>
+                    <div className="balance-card">
+                        <h4>Total Repaid</h4>
+                        <div className="amount">{summary.totalRepaid} MUSD</div>
+                    </div>
+                    <div className="balance-card">
+                        <h4>Active Balance</h4>
+                        <div className="amount">{summary.activeBalance} MUSD</div>
+                    </div>
+                    <div className="balance-card">
+                        <h4>Transactions</h4>
+                        <div className="amount">{summary.totalTransactions}</div>
                     </div>
                 </div>
-            </div>
-
-            {/* Overdue Installments */}
-            {overdueInstallments.length > 0 && (
-                <div style={{ marginBottom: '2rem' }}>
-                    <h4 style={{ color: '#ef4444' }}>⚠️ Overdue Payments</h4>
-                    {overdueInstallments.map(installment => (
-                        <div key={installment.id} className="balance" style={{ border: '1px solid #ef4444' }}>
-                            <div>
-                                <div className="balance-label">{installment.merchant}</div>
-                                <div style={{ fontSize: '0.9em', color: '#888' }}>
-                                    Payment {installment.paymentNumber} of {installment.totalPayments} • Due: {installment.dueDate}
-                                </div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <div className="balance-amount">{installment.amount} MUSD</div>
-                                <button
-                                    className="button primary"
-                                    onClick={() => handlePayInstallment(installment.id)}
-                                    disabled={isLoading}
-                                    style={{ marginTop: '0.5rem', fontSize: '0.9em' }}
-                                >
-                                    Pay Now
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+            )}
+            
+            {/* Active Locks */}
+            {installments.length > 0 && (
+                <div className="card">
+                    <h4>Treasury Locks</h4>
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                                    <th style={{ padding: '12px', textAlign: 'left' }}>Date</th>
+                                    <th style={{ padding: '12px', textAlign: 'left' }}>MUSD Locked</th>
+                                    <th style={{ padding: '12px', textAlign: 'left' }}>USDC Received</th>
+                                    <th style={{ padding: '12px', textAlign: 'left' }}>Status</th>
+                                    <th style={{ padding: '12px', textAlign: 'left' }}>Transaction</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {installments.map((installment) => (
+                                    <tr key={installment.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                                        <td style={{ padding: '12px' }}>{formatDate(installment.timestamp)}</td>
+                                        <td style={{ padding: '12px' }}>{parseFloat(installment.musdAmount).toFixed(2)} MUSD</td>
+                                        <td style={{ padding: '12px' }}>{parseFloat(installment.usdcReceived).toFixed(2)} USDC</td>
+                                        <td style={{ padding: '12px' }}>
+                                            <span style={{ 
+                                                color: installment.status === 'active' ? 'var(--primary)' : 'var(--success)',
+                                                textTransform: 'uppercase',
+                                                fontSize: '0.9em',
+                                                fontWeight: '600'
+                                            }}>
+                                                {installment.status}
+                                            </span>
+                                        </td>
+                                        <td style={{ padding: '12px' }}>
+                                            <a 
+                                                href={`https://sepolia.basescan.org/tx/${installment.txHash}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{ color: 'var(--primary)', textDecoration: 'none' }}
+                                            >
+                                                {formatTxHash(installment.txHash)}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
-
-            {/* Pending Installments */}
-            {pendingInstallments.length > 0 && (
-                <div style={{ marginBottom: '2rem' }}>
-                    <h4>📅 Upcoming Payments</h4>
-                    {pendingInstallments.map(installment => (
-                        <div key={installment.id} className="balance">
-                            <div>
-                                <div className="balance-label">{installment.merchant}</div>
-                                <div style={{ fontSize: '0.9em', color: '#888' }}>
-                                    Payment {installment.paymentNumber} of {installment.totalPayments} • Due: {installment.dueDate}
-                                </div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <div className="balance-amount">{installment.amount} MUSD</div>
-                                <button
-                                    className="button"
-                                    onClick={() => handlePayInstallment(installment.id)}
-                                    disabled={isLoading}
-                                    style={{ marginTop: '0.5rem', fontSize: '0.9em' }}
-                                >
-                                    Pay Early
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+            
+            {/* Repayment History */}
+            {repayments.length > 0 && (
+                <div className="card">
+                    <h4>Repayment History</h4>
+                    <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                                    <th style={{ padding: '12px', textAlign: 'left' }}>Date</th>
+                                    <th style={{ padding: '12px', textAlign: 'left' }}>Amount Repaid</th>
+                                    <th style={{ padding: '12px', textAlign: 'left' }}>Transaction</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {repayments.map((repayment) => (
+                                    <tr key={repayment.id} style={{ borderBottom: '1px solid var(--glass-border)' }}>
+                                        <td style={{ padding: '12px' }}>{formatDate(repayment.timestamp)}</td>
+                                        <td style={{ padding: '12px' }}>{parseFloat(repayment.amount).toFixed(2)} MUSD</td>
+                                        <td style={{ padding: '12px' }}>
+                                            <a 
+                                                href={`https://sepolia.basescan.org/tx/${repayment.txHash}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{ color: 'var(--primary)', textDecoration: 'none' }}
+                                            >
+                                                {formatTxHash(repayment.txHash)}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
-
-            {/* Paid Installments */}
-            {paidInstallments.length > 0 && (
-                <div>
-                    <h4>✅ Completed Payments</h4>
-                    {paidInstallments.map(installment => (
-                        <div key={installment.id} className="balance" style={{ opacity: 0.7 }}>
-                            <div>
-                                <div className="balance-label">{installment.merchant}</div>
-                                <div style={{ fontSize: '0.9em', color: '#888' }}>
-                                    Payment {installment.paymentNumber} of {installment.totalPayments} • Paid: {installment.dueDate}
-                                </div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <div className="balance-amount" style={{ color: '#4ade80' }}>
-                                    {installment.amount} MUSD
-                                </div>
-                                <div style={{ fontSize: '0.8em', color: '#4ade80', marginTop: '0.5rem' }}>
-                                    PAID
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+            
+            {!isLoading && installments.length === 0 && repayments.length === 0 && (
+                <div className="card">
+                    <h4>No Treasury Activity</h4>
+                    <p style={{ color: 'var(--text-muted)' }}>
+                        You haven't made any treasury transactions yet. Use the Treasury tab to lock MUSD and get spendable USDC.
+                    </p>
                 </div>
             )}
-
-            {installments.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>
-                    <p>No installments yet. Make your first purchase to get started!</p>
-                </div>
-            )}
-
-            <div style={{ marginTop: '2rem', fontSize: '0.9em', color: '#888' }}>
-                <p><strong>Payment Options:</strong></p>
-                <ul style={{ textAlign: 'left', paddingLeft: '1.5rem' }}>
-                    <li>Automatic payments from your MUSD balance</li>
-                    <li>Manual payments anytime before due date</li>
-                    <li>Early payment discounts available</li>
-                    <li>Grace period for late payments (small fee applies)</li>
+            
+            <div style={{ marginTop: '16px', fontSize: '0.9em', color: 'var(--text-muted)' }}>
+                <p><strong>How it works:</strong></p>
+                <ul style={{ paddingLeft: '20px' }}>
+                    <li>Lock MUSD in treasury → receive spendable USDC 1:1</li>
+                    <li>Use USDC for purchases and payments</li>
+                    <li>Repay MUSD to unlock your treasury position</li>
+                    <li>All transactions are tracked on Base Sepolia blockchain</li>
                 </ul>
             </div>
         </div>
