@@ -1,9 +1,9 @@
 import { WalletClient, parseUnits, formatUnits, erc20Abi } from 'viem'
 
-// Contract addresses (will be updated after deployment)
+// Contract addresses (deployed on Base Sepolia)
 const TREASURY_CONTRACTS = {
-    BITPAY_TREASURY: '0x0000000000000000000000000000000000000000', // To be updated
-    FAKE_USDC: '0x0000000000000000000000000000000000000000', // To be updated
+    BITPAY_TREASURY: '0xbb53cb5d15ca9df45e7ed01a91871d4180399533',
+    FAKE_USDC: '0xa6347e1dcb5f4c80ff2022850106eb5c7bf07f57',
     MUSD_BASE: '0x560985f804De8187E8FBA94F7127Bc4c0e54AEA5' // Bridged MUSD on Base Sepolia
 } as const
 
@@ -156,13 +156,13 @@ export class TreasuryService {
     }
 
     /**
-     * Update contract addresses after deployment
+     * Update contract addresses after deployment (no longer needed - addresses are deployed)
      */
     static updateAddresses(treasuryAddress: string, fakeUsdcAddress: string) {
-        // @ts-ignore - Updating const for deployment
-        TREASURY_CONTRACTS.BITPAY_TREASURY = treasuryAddress
-        // @ts-ignore
-        TREASURY_CONTRACTS.FAKE_USDC = fakeUsdcAddress
+        console.log('Contract addresses are already set to deployed values:', {
+            treasury: TREASURY_CONTRACTS.BITPAY_TREASURY,
+            fakeUsdc: TREASURY_CONTRACTS.FAKE_USDC
+        })
     }
 }
 
