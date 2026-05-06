@@ -180,14 +180,9 @@ export function TroveInterface({ onMUSDReceived }: TroveInterfaceProps) {
             
             {/* Trove Status */}
             {hasTrove && troveData && (
-                <div className="trove-status" style={{ 
-                    background: '#f5f5f5', 
-                    padding: '1rem', 
-                    borderRadius: '8px', 
-                    marginBottom: '1rem' 
-                }}>
+                <div className="trove-status">
                     <h4>Your Trove Status</h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                         <div>
                             <strong>BTC Collateral:</strong> {parseFloat(troveData.collateral).toFixed(4)} BTC
                         </div>
@@ -201,11 +196,11 @@ export function TroveInterface({ onMUSDReceived }: TroveInterfaceProps) {
                             <strong>Interest Owed:</strong> {parseFloat(troveData.interestOwed).toFixed(4)} MUSD
                         </div>
                     </div>
-                    <div style={{ marginTop: '0.5rem' }}>
+                    <div style={{ marginTop: '8px' }}>
                         <strong>Status:</strong> 
                         <span style={{ 
-                            color: troveData.status === 'active' ? 'green' : 'red',
-                            marginLeft: '0.5rem'
+                            color: troveData.status === 'active' ? 'var(--success)' : 'var(--primary)',
+                            marginLeft: '8px'
                         }}>
                             {troveData.status.toUpperCase()}
                         </span>
@@ -214,12 +209,11 @@ export function TroveInterface({ onMUSDReceived }: TroveInterfaceProps) {
             )}
             
             {/* Operation Selector */}
-            <div style={{ marginBottom: '1rem' }}>
-                <label>Operation:</label>
+            <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-main)' }}>Operation:</label>
                 <select 
                     value={operation} 
                     onChange={(e) => setOperation(e.target.value as any)}
-                    style={{ marginLeft: '0.5rem', padding: '0.5rem' }}
                 >
                     {!hasTrove && <option value="open">Open New Trove</option>}
                     {hasTrove && <option value="borrow">Borrow More MUSD</option>}
@@ -229,43 +223,29 @@ export function TroveInterface({ onMUSDReceived }: TroveInterfaceProps) {
             </div>
             
             {/* Input Forms */}
-            <div style={{ display: 'grid', gap: '1rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'grid', gap: '16px', marginBottom: '16px' }}>
                 {(operation === 'open' || operation === 'addColl') && (
                     <div>
-                        <label>BTC Amount:</label>
+                        <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-main)' }}>BTC Amount:</label>
                         <input
                             type="number"
                             step="0.0001"
                             placeholder="0.1"
                             value={btcAmount}
                             onChange={(e) => setBtcAmount(e.target.value)}
-                            style={{ 
-                                width: '100%', 
-                                padding: '0.5rem', 
-                                marginTop: '0.25rem',
-                                border: '1px solid #ccc',
-                                borderRadius: '4px'
-                            }}
                         />
                     </div>
                 )}
                 
                 {(operation === 'open' || operation === 'borrow' || operation === 'repay') && (
                     <div>
-                        <label>MUSD Amount:</label>
+                        <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-main)' }}>MUSD Amount:</label>
                         <input
                             type="number"
                             step="0.01"
                             placeholder="1000"
                             value={musdAmount}
                             onChange={(e) => setMusdAmount(e.target.value)}
-                            style={{ 
-                                width: '100%', 
-                                padding: '0.5rem', 
-                                marginTop: '0.25rem',
-                                border: '1px solid #ccc',
-                                borderRadius: '4px'
-                            }}
                         />
                     </div>
                 )}
@@ -273,6 +253,7 @@ export function TroveInterface({ onMUSDReceived }: TroveInterfaceProps) {
             
             {/* Action Button */}
             <button
+                className="button primary"
                 onClick={() => {
                     switch (operation) {
                         case 'open': return handleOpenTrove()
@@ -282,16 +263,7 @@ export function TroveInterface({ onMUSDReceived }: TroveInterfaceProps) {
                     }
                 }}
                 disabled={isLoading || !walletClient}
-                style={{
-                    width: '100%',
-                    padding: '1rem',
-                    backgroundColor: isLoading ? '#ccc' : '#007bff',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '1rem',
-                    cursor: isLoading ? 'not-allowed' : 'pointer'
-                }}
+                style={{ width: '100%', marginBottom: '16px' }}
             >
                 {isLoading ? 'Processing...' : 
                  operation === 'open' ? `Open Trove (${btcAmount} BTC → ${musdAmount} MUSD)` :
@@ -300,9 +272,9 @@ export function TroveInterface({ onMUSDReceived }: TroveInterfaceProps) {
                  `Add ${btcAmount} BTC Collateral`}
             </button>
             
-            <div style={{ marginTop: '1rem', fontSize: '0.9em', color: '#666' }}>
+            <div style={{ marginTop: '16px', fontSize: '0.9em', color: 'var(--text-muted)' }}>
                 <p><strong>How it works:</strong></p>
-                <ul style={{ paddingLeft: '1.5rem' }}>
+                <ul style={{ paddingLeft: '20px' }}>
                     <li>Deposit BTC as collateral on Mezo</li>
                     <li>Borrow MUSD at 1% fixed interest rate</li>
                     <li>Your BTC stays in your control (no selling)</li>
