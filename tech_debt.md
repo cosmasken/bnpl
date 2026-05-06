@@ -22,19 +22,30 @@
 
 ---
 
+### 3. ✅ Added Treasury Integration (Phase 4-5)
+- **ADDED:** `src/services/treasuryService.ts` - Complete Base Sepolia treasury contract integration
+- **ADDED:** `src/components/TreasuryInterface.tsx` - UI for MUSD locking and fake USDC distribution
+- **CONFIGURED:** Hardhat project for Base Sepolia deployment with dotenv
+- **REPLACED:** Mock purchase flow with real treasury contract interactions
+- **INTEGRATED:** Treasury as primary tab (replacing Bridge tab for better UX)
+- **READY:** Contract deployment and real transaction implementation
+
 ## 🚧 REMAINING WORK - Implementation Priority
 
-### Phase 4: ✅ NEXT - Deploy BitPayTreasury.sol on Base Sepolia
-**Action:** Create and deploy treasury contract on Base
-- User locks bridged MUSD → gets fake USDC 1:1
-- **Reference:** `references/Stratum-FI/stratum-contracts/contracts/VaultController.sol`
-- Deploy fake USDC token for hackathon demo
+### Phase 6: ✅ NEXT - Deploy Contracts and Update Addresses
+**Action:** Deploy to Base Sepolia and update contract addresses
+```bash
+cd contracts
+cp .env.example .env
+# Add PRIVATE_KEY=your_key
+npx hardhat run scripts/deploy.js --network baseSepolia
+```
+Then update addresses in `src/services/treasuryService.ts`
 
-### Phase 5: Replace Mock Components with Real Transactions
+### Phase 7: Replace Remaining Mock Components
 **Files to Update:**
-- `src/components/PurchaseInterface.tsx` - Replace setTimeout simulation
-- `src/components/InstallmentTracker.tsx` - Replace hardcoded mock data
-- Connect to Base treasury contract events
+- `src/components/InstallmentTracker.tsx` - Replace hardcoded mock data with treasury events
+- Connect to real Base treasury contract events for installment tracking
 
 ### Phase 6: Bitrefill Integration (LAST)
 **Action:** Real merchant spending integration
