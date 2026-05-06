@@ -164,11 +164,6 @@ export function BridgeInterface({ userAddress, onBridgeComplete }: BridgeInterfa
                         `Bridge ${amount} MUSD`
                     )}
                 </button>
-
-                {/* Debug info */}
-                <div style={{ marginTop: '1rem', fontSize: '0.8em', color: '#666' }}>
-                    <p>Debug: amount="{amount}", walletClient={walletClient ? 'connected' : 'not connected'}, fromChain={fromChain}, toChain={toChain}</p>
-                </div>
             </div>
 
             {status && (

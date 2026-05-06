@@ -1,10 +1,11 @@
-// @ts-nocheck
 import {
     TransactionId,
     Wormhole,
     amount,
+    signSendWait,
 } from "@wormhole-foundation/sdk";
 import evm from "@wormhole-foundation/sdk/platforms/evm";
+import { nttManualRoute } from "@wormhole-foundation/sdk-route-ntt";
 import { WalletClient, parseUnits, erc20Abi } from 'viem'
 
 // Register protocol implementations
@@ -44,10 +45,11 @@ export class BridgeService {
             const dstChain = this.wh.getChain(toChain);
 
             const senderAddress = walletClient.account.address;
-
-            // For EVM chains, we can use the address directly
-            // The NTT protocol expects the address in the correct format
             const recipient = recipientAddress || senderAddress;
+
+            // Create signers for both chains
+            const srcSigner = await srcChain.getSigner(walletClient);
+            const dstSigner = await dstChain.getSigner(walletClient);
 
             const srcNtt = await srcChain.getProtocol("Ntt", {
                 ntt: MUSD_NTT_CONTRACTS[fromChain],
@@ -76,7 +78,7 @@ export class BridgeService {
             });
             console.log("Approval transaction:", approvalTx);
 
-            // Initiate the NTT transfer - pass recipient address directly for EVM chains
+            // Initiate the NTT transfer
             console.log("Initiating NTT transfer...");
             const transfer = srcNtt.transfer(senderAddress, amt, recipient, {
                 queue: false,
@@ -84,7 +86,7 @@ export class BridgeService {
                 gasDropoff: 0n,
             });
 
-            // Get the transaction data and send it manually
+            // Send transfer transaction on source chain
             console.log("Sending transfer transaction...");
             const transferTxHash = await walletClient.sendTransaction({
                 to: MUSD_NTT_CONTRACTS[fromChain].manager as `0x${string}`,
@@ -114,25 +116,18 @@ export class BridgeService {
 
             console.log("VAA received, redeeming on destination...");
 
-            // Redeem on destination chain - pass recipient address directly
-            const redeemTxHash = await walletClient.sendTransaction({
-                to: MUSD_NTT_CONTRACTS[toChain].manager as `0x${string}`,
-                data: (await dstNtt.redeem([vaa], recipient)).data || '0x',
-                value: 0n,
-                chain: walletClient.chain,
-                account: walletClient.account,
-            });
-            console.log("Redeem transaction sent:", redeemTxHash);
-
-            // Wait for destination transaction receipt
-            const dstPublicClient = await dstChain.getRpc();
-            const dstReceipt = await dstPublicClient.waitForTransactionReceipt({ hash: redeemTxHash });
-            console.log("Redeem confirmed:", dstReceipt);
+            // FIXED: Use destination chain signer for redeem transaction
+            const dstTxids = await signSendWait(
+                dstChain,
+                dstNtt.redeem([vaa], recipient),
+                dstSigner.signer
+            );
+            console.log("Redeem transaction confirmed:", dstTxids);
 
             return {
                 success: true,
                 sourceTxIds: [{ txid: transferTxHash }],
-                destinationTxIds: [{ txid: redeemTxHash }],
+                destinationTxIds: dstTxids,
                 vaa,
             };
 

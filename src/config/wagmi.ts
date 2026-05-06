@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { createConfig, http } from 'wagmi'
 import { metaMask, walletConnect, coinbaseWallet } from '@wagmi/connectors'
 import { defineChain } from 'viem'
