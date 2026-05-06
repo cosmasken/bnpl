@@ -14,22 +14,17 @@
 ### 2. ✅ Added Mezo Trove Integration
 - **ADDED:** `src/services/troveService.ts` - Complete service for BTC collateral and MUSD borrowing
 - **ADDED:** `src/config/contracts.ts` - Mezo Testnet addresses and minimal ABIs
+- **ADDED:** `src/components/TroveInterface.tsx` - Full React UI for Trove operations
 - **IMPLEMENTED:** `openTrove()`, `addCollateral()`, `borrowMUSD()`, `repayMUSD()` functions
 - **IMPLEMENTED:** `getTroveData()` and `hasTrove()` utility functions
+- **INTEGRATED:** Trove tab as primary interface in main app navigation
 - **VERIFIED:** Uses real Mezo contracts (not custom deployment)
 
 ---
 
 ## 🚧 REMAINING WORK - Implementation Priority
 
-### Phase 3: ✅ NEXT - Create Trove UI Component
-**Action:** Create `src/components/TroveInterface.tsx`
-- Integrate `troveService.ts` with React UI
-- Allow users to deposit BTC and borrow MUSD
-- Display collateral ratio and debt status
-- **Reference:** `references/dapp/src/hooks/useSwapMutations.ts` (React Query patterns)
-
-### Phase 4: Deploy BitPayTreasury.sol on Base Sepolia
+### Phase 4: ✅ NEXT - Deploy BitPayTreasury.sol on Base Sepolia
 **Action:** Create and deploy treasury contract on Base
 - User locks bridged MUSD → gets fake USDC 1:1
 - **Reference:** `references/Stratum-FI/stratum-contracts/contracts/VaultController.sol`
