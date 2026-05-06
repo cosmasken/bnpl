@@ -17,3 +17,8 @@ BUILD.md
 references/
 dapp/
 ntt-bridge-mezo-testnet/
+
+# Contract artifacts and environment
+contracts/artifacts/
+contracts/cache/
+contracts/.env
